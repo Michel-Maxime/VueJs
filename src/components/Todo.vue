@@ -2,7 +2,7 @@
   <div>
     <input v-model="newTodo" type="text" />
     <input v-model="newTime" type="number" min="0" />
-    <select @change="switchView($event.target.selectedIndex)">
+    <select @change="switchIndex($event.target.selectedIndex)">
       <option v-for="(responsable, index) in allRespondable" :key="index">
         {{ responsable }}
       </option>
@@ -63,6 +63,7 @@ export default {
           title: this.newTodo,
           time: +this.newTime,
           responsable: this.allRespondable[this.newResponsableIndex],
+          do: false,
         });
       } else {
         this.tasks[this.indexEditTodo].title = this.newTodo;
@@ -85,7 +86,7 @@ export default {
     deleteTask(index) {
       this.tasks.splice(index, 1);
     },
-    switchView(selectedIndex) {
+    switchIndex(selectedIndex) {
       this.newResponsableIndex = selectedIndex;
     },
 
