@@ -1,27 +1,28 @@
 <template>
   <div>
-    <input v-model="newTodo" type="text" />
-    <input v-model="newTime" type="number" min="0" />
-    <select @change="switchIndex($event.target.selectedIndex)">
+    <!-- <button @click="test">Test button</button> -->
+    <input v-model="getNewTodo.title" type="text" />
+    <input v-model="getNewTodo.time" type="number" min="0" />
+    <select v-model="getNewTodo.responsable">
       <option v-for="(responsable, index) in allRespondable" :key="index">
         {{ responsable }}
       </option>
     </select>
-    <button @click="addTask">Add Todo</button>
+    <button @click="addTaskToStore">Add Todo</button>
 
     <div
       :style="{ border: 'solid' }"
-      v-for="(task, index) in tasks"
+      v-for="(task, index) in getTodos"
       :key="index"
-      @click="toogleState(index)"
       :class="{ red: task.do }"
     >
-      <p>title: {{ task.title }}</p>
-      <p>time : {{ task.time }}</p>
-      <p>responsable : {{ task.responsable }}</p>
-
-      <button @click="deleteTask(index)">Delete</button>
-      <button @click="editTask(index)">Edit</button>
+      <div @click="toogleState(index)">
+        <p>title: {{ task.title }}</p>
+        <p>time : {{ task.time }}</p>
+        <p>responsable : {{ task.responsable }}</p>
+      </div>
+      <button @click="deleteTodo(index)">Delete</button>
+      <button @click="editTodo(index)">Edit</button>
     </div>
   </div>
 </template>
@@ -31,87 +32,68 @@ export default {
   name: "ToDo",
   data() {
     return {
-      newTodo: "",
-      newTime: 0,
-      newResponsableIndex: 0,
       allRespondable: ["Pierre", "Paul", "Jack", "Jean"],
-      indexEditTodo: null,
-      tasks: [
-        {
-          title: "ranger la chambre",
-          time: 11,
-          responsable: "Pierre",
-          do: false,
-        },
-        {
-          title: "faire la vaiselle",
-          time: 2,
-          responsable: "Jean",
-          do: false,
-        },
-      ],
     };
   },
   methods: {
-    addTask() {
-      if (!this.canSubmit()) {
+    // with store
+    test() {
+      console.log(this.$store.state);
+    },
+    addTaskToStore() {
+      if (!this.canSubmitNewTodo()) {
         alert("Oups something wrong !!");
         return;
       }
-      if (this.indexEditTodo === null) {
-        this.tasks.push({
-          title: this.newTodo,
-          time: +this.newTime,
-          responsable: this.allRespondable[this.newResponsableIndex],
-          do: false,
-        });
+      if (this.getIndexEditTodo === null) {
+        this.$store.dispatch("addTodo");
       } else {
-        this.tasks[this.indexEditTodo].title = this.newTodo;
-        this.tasks[this.indexEditTodo].time = this.newTime;
-        this.tasks[this.indexEditTodo].responsable =
-          this.allRespondable[this.newResponsableIndex];
-
-        this.indexEditTodo = null;
+        this.$store.dispatch("putTodo");
       }
-      this.newTodo = "";
-      this.newTime = 0;
     },
 
-    editTask(index) {
-      this.newTodo = this.tasks[index].title;
-      this.newTime = this.tasks[index].time;
-      this.indexEditTodo = index;
+    editTodo(index) {
+      this.$store.dispatch("editTodo", index);
     },
 
-    deleteTask(index) {
-      this.tasks.splice(index, 1);
+    deleteTodo(index) {
+      this.$store.dispatch("deleteTodo", index);
     },
-    switchIndex(selectedIndex) {
-      this.newResponsableIndex = selectedIndex;
-    },
-
-    canSubmit() {
-      var responsable = this.tasks.filter(
-        (v) => v.responsable === this.allRespondable[this.newResponsableIndex]
+    canSubmitNewTodo() {
+      var responsable = this.getTodos.filter(
+        (v) => v.responsable === this.getNewTodo.responsable
       );
       var responsableTasks = responsable.length;
 
       var responsableTime = responsable.reduce((accumulator, object) => {
         return accumulator + object.time;
       }, 0);
-
+      console.log(responsableTasks, responsableTime, this.getNewTodo);
       if (
         responsableTasks >= 3 ||
         responsableTime > 10 ||
-        this.newTodo.length === 0 ||
-        this.newTime == 0
+        this.getNewTodo.title.length === 0 ||
+        this.getNewTodo.responsable.length === 0 ||
+        this.getNewTodo.time == 0
       ) {
         return false;
       }
       return true;
     },
     toogleState(index) {
-      this.tasks[index].do = !this.tasks[index].do;
+      this.$store.dispatch("patchTodo", index);
+    },
+  },
+
+  computed: {
+    getTodos() {
+      return this.$store.getters.todos;
+    },
+    getIndexEditTodo() {
+      return this.$store.getters.indexEditTodo;
+    },
+    getNewTodo() {
+      return this.$store.getters.newTodo;
     },
   },
 };
